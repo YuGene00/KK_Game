@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: 5903c4152e5fafe4398376f12b4d089f
-timeCreated: 1481250030
+guid: 8481682046ac0f14688ebdf4c8289c53
+timeCreated: 1484063467
 licenseType: Free
 TrueTypeFontImporter:
   serializedVersion: 4
@@ -9,8 +9,9 @@ TrueTypeFontImporter:
   characterSpacing: 0
   characterPadding: 1
   includeFontData: 1
+  fontName: BM JUA_TTF
   fontNames:
-  - Felt
+  - BM JUA_TTF
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0
