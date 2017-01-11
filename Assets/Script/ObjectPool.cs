@@ -58,6 +58,7 @@ public class ObjectPool {
     GameObject CreateNewObjectIntoStack() {
         GameObject newObj = Object.Instantiate(origin);
         newObj.transform.SetParent(root.trans);
+        newObj.AddComponent<ObjPoolComponent>().ObjectPool = this;
         poolStack.Push(newObj);
         return newObj;
     }
@@ -100,5 +101,35 @@ public class ObjectPool {
     IEnumerator ReleaseAfterTime(GameObject obj, float time) {
         yield return new WaitForSeconds(time);
         Release(obj);
+    }
+}
+
+public class ObjPoolComponent : MonoBehaviour {
+
+    //caching
+    GameObject gameObj;
+    
+    //variable
+    ObjectPool objectPool;
+    public ObjectPool ObjectPool {
+        set {
+            objectPool = value;
+        }
+    }
+
+    void Awake() {
+        InitCaching();
+    }
+
+    void InitCaching() {
+        gameObj = gameObject;
+    }
+
+    public void Release() {
+        objectPool.Release(gameObj);
+    }
+
+    public void Release(float time) {
+        objectPool.Release(gameObj, time);
     }
 }
