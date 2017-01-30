@@ -15,9 +15,8 @@ public class ItemMgr {
 		} else {
 			coroutineList[emptyIdx] = RunCreatorWithDuration(itemCreator, new WaitForSeconds(duration));
 		}
-		int result = emptyIdx;
-		emptyIdx = FindEmptyIdx();
-		return result;
+		
+		return GetSettedIdx();
 	}
 
 	IEnumerator RunCreatorWithDuration(ItemCreator itemCreator, WaitForSeconds forDuration) {
@@ -28,12 +27,38 @@ public class ItemMgr {
 		}
 	}
 
+	int GetSettedIdx() {
+		int result = emptyIdx;
+		emptyIdx = FindEmptyIdx();
+		return result;
+	}
+
 	int FindEmptyIdx() {
-		for(int i = 1; i < coroutineList.Count; ++i) {
-			if(coroutineList[emptyIdx + i] == null) {
-				return emptyIdx + i;
+		for(int i = emptyIdx + 1; i < coroutineList.Count; ++i) {
+			if(coroutineList[i] == null) {
+				return i;
 			}
 		}
-		return emptyIdx + coroutineList.Count;
+		return coroutineList.Count;
+	}
+
+	public void RemoveCreatorWithIdx(int index) {
+		try {
+			TryAccessCoroutineListWithIdx(index);
+			coroutineList[index] = null;
+			SetEmptyIdx(index);
+		} finally { }
+	}
+
+	void TryAccessCoroutineListWithIdx(int index) {
+		if (index > coroutineList.Count) {
+			throw new System.Exception("Out of Coroutine List Range");
+		}
+	}
+
+	void SetEmptyIdx(int index) {
+		if(index < emptyIdx) {
+			emptyIdx = index;
+		}
 	}
 }
