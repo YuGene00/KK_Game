@@ -1,50 +1,110 @@
-코루틴 싱글톤 클래스
--코루틴 호출용 싱글톤 클래스
+CoroutineDelegate
+-Monobehavior-Singleton
+-Monobehavior이 아닌 class의 coroutine 지원
+-Scene 전환해도 초기화하지 않음(DontDestroyOnLoad)
 
-마우스 컨트롤러 클래스
--마우스 클릭 시 기준점 저장
--마우스 드래그 상태인지 체크
--드래그 상태일 경우 기준점과 좌표를 이용하여 플레이어 이동
+InputManager
+-Monobehavior-Singleton
+-터치 혹은 마우스 입력으로 Player 이동
+-MouseDown(): 마우스 다운 시 마우스좌표, 플레이어좌표 저장 및 drag flag 활성화
+-MouseUp(): 마우스 업 시 drag flag 비활성화
+-Dragging(): drag flag 활성화 시 현재 좌표-저장된 좌표 계산하여 플레이어 좌표도 해당 식으로 세팅
+
+EventManager
+-Monobehavior-Singleton
+-각종 이벤트 매개
+-Awake:[InitializeStage]Run
+-Start:[RunStage]Run
+-get RunStage: RunStage 반환
+-get PlayerDie: PlayerDie 반환
+-get Result: Result 반환
+
+IEvent
+-interface
+-실제 이벤트들의 인터페이스
+-Run()->이벤트 실행
+
+InitializeStage
+-class:IEvent
+-스테이지 초기화 담당
+-Inspector
+--Set: 플레이어 캐릭터 Prefab
+--Set: 배경 Sprite
+--Set: 아이템 Prefabs, 각 아이템당 생성 주기
+-override Run()->게임 해상도, 플레이어 캐릭터, 배경, 아이템 디스펜서 설정
+
+RunStage
+-class:IEvent
+-스테이지 실행 담당
+-Inspector
+--게임 속도 상승 주기
+--게임 속도 상승비
+-AddItemDropperByDuration(Item item, int duration): ItemDropper 리스트에 새로운 ItemDropper 추가
+-override Run()->[ItemDropper]Start, 게임 속도 주기적으로 상승시키는 코루틴 실행
+
+ItemDropper
+-class
+-아이템 드랍 담당
+-static get set UnitTime: 주기의 기준이 되는 시간
+-InitializeBy(Item target): target 세팅
+-SetDuration(int duration): 주기 세팅
+-Start(): 주기마다 윗부분에 아이템 생성하는 코루틴 실행
+-Stop(): 코루틴 정지
+
+PlayerDie
+-class: IEvent
+-플레이어 사망 시 이벤트
+-override Run()->사망 이벤트 실행 후 [EventManager]Result.Run
+
+Result
+-class: IEvent
+-게임 결과 이벤트
+-override Run()->결과 UI 띄우고 최고점수 갱신
+-AddScore(int value): 점수 추가
 
 
-플레이어 매니저 컨트롤러 클래스
--(무브 매개)좌표를 집어넣으면->트랜스폼의 좌표를 해당 좌표로 변경
--(라이프 매개)값을 집어넣으면->라이프 증감
--(스코어 매개)값을 집어넣으면->스코어 증감
--충돌 시(아이템 컨트롤러 매개)충돌 객체를 집어넣으면->충돌한 객체에 최상위 컨트롤러를 넘겨주며 효과 온
--(콤보 매개)값을 집어넣으면->콤보 상승
--(콤보 매개)콤보 중단
 
+Player
+-Monobehavior-Singleton
+-Player의 각종 컴포넌트들을 매개
+-Inspector
+--자식들의 Inspector
+-get CurrentCombo: [Combo]CurrentCombo 반환
+-Move(Vector2 coordinate): [Mover]MoveInArea(coordinate)
+-Damaged(int value): [HpManager]Damaged(value), [ComboManager]Stop 후 [HpManager]CurrentHp가 0 이하이면
+-Recovery(int value): [HpManager]Recovery(value)
+-ComboUp(int value): [ComboManager]ComboUp(value)
 
-무브 모델 클래스
--트랜스폼 세팅
--애리어 세팅
--좌표를 집어넣으면->트랜스폼의 좌표를 해당 좌표로 변경
-1. (애리어 매개)애리어 내부에서만 이동
-2. 애리어 무시하고 이동
--(애리어 매개)좌표를 집어넣으면->애리어 내부인지 리턴
+Mover
+-class
+-좌표 기반 이동 담당
+-기본 Area 좌표: 화면 전체
+-InitializeBy(Transform target): target 세팅
+-SetArea(Area area): area 좌표 세팅
+-Move(Vector2 coordinate): target의 좌표 이동
+-MoveInArea(Vector2 coordinate): Area 좌표와 비교하여 공간 내부로 값 보정 후 target의 좌표 이동
+-IsInArea(): target의 좌표가 Area 내부인지 반환
 
-애리어 모델 클래스
--좌하, 우상 벡터 세팅
--좌표를 집어넣으면->애리어 내부로 좌표 수정
--좌표를 집어넣으면->애리어 내부인지 리턴
+Area
+-struct
+-사각형의 공간 정보
+-float xMin, xMax, yMin, yMax
 
-라이프 모델 클래스
--맥스값 세팅
--값을 집어넣으면->라이프 증감
--라이프에 변동이 있으면->(UI 매개)하트 갯수 증감
--라이프가 0 이하이면->(이벤트 매개)게임 오버 이벤트 호출
+HpManager
+-class
+-HP 관리
+-Inspector
+--Current Hp
+-get CurrentHp: 현재 hp 반환
+-Damaged(int value): immortal flag가 false라면 현재 Hp 차감 후 일정 시간 immortal flag true
+-Recovery(int value): 현재 Hp+=value
 
-스코어 모델 클래스
--값을 집어넣으면->점수 증감
--점수에 변동이 있으면->(UI 매개)점수 숫자 변경
--하이스코어 갱신 및 저장
-
-콤보 모델 클래스
--값을 집어넣으면->콤보 상승
--콤보 중단
--콤보 시간 다 되면 중단
--현재 콤보 리턴
+ComboManager
+-class
+-콤보 관리
+-get CurrentCombo: 현재 콤보 반환
+-ComboUp(int value): RunStopCombo 코루틴 정지 및 콤보 상승 후 RunStopCombo 시작
+-Stop(): 콤보 지속 코루틴 정지 및 콤보 초기화
 
 
 아이템 컨트롤러 클래스
@@ -96,22 +156,6 @@
 -이펙터들 집어넣으면->(추가할)이팩터 매니저에 추가
 -(오브젝트 풀 매개)아이템 생성하여 (아이템 컨트롤러 매개)아이템의 이펙터 매니저를 크리에이터의 이펙터 매니저와 동기화한 후 반환
 
-
-이벤트 매니저 컨트롤러 클래스
--(이니셜라이즈 이벤트 매개)초기화 이벤트 호출
--(게임 스피드 매개)게임 스피드 상승 이벤트 호출
--(데드 이벤트 매개)죽음 이벤트 호출
-
-이니셜라이즈 이벤트 모델 클래스
--해상도 세팅
--(아이템 디스펜서 매개)아이템 디스펜서 세팅
-
-게임 스피드 모델 클래스
--초기 게임 속도 세팅
--주기와 증가속도를 집어넣으면->게임 속도 증가 코루틴 실행
-
-데드 이벤트 모델 클래스
--(아이템 디스펜서 매개)아이템 디스펜서 코루틴 정지
 
 
 *오브젝트 풀
